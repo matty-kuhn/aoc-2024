@@ -1,3 +1,5 @@
+use std::time;
+
 use clap::Parser;
 use days::{day_builder, Day, CURRENT_DAY};
 
@@ -39,14 +41,30 @@ fn main() {
         println!("Day {}", idx);
         if let Some(part) = args.part {
             match part {
-                1 => println!("\tPart 1: {}", day.part1()),
-                2 => println!("\tPart 2: {}", day.part2()),
+                1 => {
+                    let part1 = time::Instant::now();
+                    let part1_res = day.part1();
+                    let part1_elapsed = part1.elapsed();
+                    println!("\tPart 1: {}\n\telapsed: {:.6?}", part1_res, part1_elapsed);
+                }
+                2 => {
+                    let part2 = time::Instant::now();
+                    let part2_res = day.part2();
+                    let part2_elapsed = part2.elapsed();
+                    println!("\tPart 2: {}\n\telapsed: {:.6?}", part2_res, part2_elapsed);
+                }
                 _ => panic!("Part {} not implemented yet", part),
             }
             continue;
         } else {
-            println!("\tPart 1: {}", day.part1());
-            println!("\tPart 2: {}", day.part2());
+            let part1 = time::Instant::now();
+            let part1_res = day.part1();
+            let part1_elapsed = part1.elapsed();
+            println!("\tPart 1: {}\n\telapsed: {:.6?}", part1_res, part1_elapsed);
+            let part2 = time::Instant::now();
+            let part2_res = day.part2();
+            let part2_elapsed = part2.elapsed();
+            println!("\tPart 2: {}\n\telapsed: {:.6?}", part2_res, part2_elapsed);
         }
     }
 }
