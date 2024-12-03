@@ -65,7 +65,7 @@ impl Day2 {
             return true;
         }
         // test missing back
-        if Self::test_safe(&levels[..levels.len()-1]) {
+        if Self::test_safe(&levels[..levels.len() - 1]) {
             return true;
         }
         // test misisng middles
