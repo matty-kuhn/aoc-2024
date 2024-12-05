@@ -28,14 +28,12 @@ fn main() {
         } else {
             days.push((day, day_builder(day, &format!("day{}_test", day))));
         }
-    } else {
-        if day == -1 {
-            for day_num in 1..=CURRENT_DAY {
-                days.push((day_num, day_builder(day_num, &format!("day{}", day_num))));
-            }
-        } else {
-            days.push((day, day_builder(day, &format!("day{}", day))));
+    } else if day == -1 {
+        for day_num in 1..=CURRENT_DAY {
+            days.push((day_num, day_builder(day_num, &format!("day{}", day_num))));
         }
+    } else {
+        days.push((day, day_builder(day, &format!("day{}", day))));
     }
     for (idx, day) in days {
         println!("Day {}", idx);

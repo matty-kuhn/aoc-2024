@@ -44,13 +44,13 @@ impl Day5 {
 
     // returns set of invalid index pairs
     fn get_invalid_indices(
-        update: &Vec<i32>,
+        update: &[i32],
         rules: &HashMap<i32, HashSet<i32>>,
     ) -> HashSet<(usize, usize)> {
         let mut seen = HashMap::new();
         let mut invalids = HashSet::new();
         for (idx, page) in update.iter().enumerate() {
-            if let Some(parents) = rules.get(&page) {
+            if let Some(parents) = rules.get(page) {
                 for parent in parents {
                     if seen.keys().collect::<HashSet<_>>().contains(&parent) {
                         invalids.insert((idx, seen[&parent]));
@@ -62,7 +62,7 @@ impl Day5 {
         invalids
     }
 
-    fn check_valid(update: &Vec<i32>, rules: &HashMap<i32, HashSet<i32>>) -> bool {
+    fn check_valid(update: &[i32], rules: &HashMap<i32, HashSet<i32>>) -> bool {
         let mut seen = HashSet::new();
         let mut valid = true;
         for page in update {
@@ -70,7 +70,7 @@ impl Day5 {
             if !valid {
                 break;
             }
-            if let Some(parents) = rules.get(&page) {
+            if let Some(parents) = rules.get(page) {
                 for parent in parents {
                     if seen.contains(parent) {
                         valid = false;
@@ -104,18 +104,16 @@ impl Day for Day5 {
         let mut sum = 0;
         for update in updates.iter_mut() {
             // skip valid lists
-            if Self::check_valid(&update, &rules) {
+            if Self::check_valid(update, &rules) {
                 continue;
             }
-            let mut invalid_pairs = Self::get_invalid_indices(&update, &rules);
+            let mut invalid_pairs = Self::get_invalid_indices(update, &rules);
             // reorder the list
             while !invalid_pairs.is_empty() {
                 for (first, second) in &invalid_pairs {
-                    let temp = update[*first];
-                    update[*first] = update[*second];
-                    update[*second] = temp;
+                    update.swap(*first, *second);
                 }
-                invalid_pairs = Self::get_invalid_indices(&update, &rules);
+                invalid_pairs = Self::get_invalid_indices(update, &rules);
             }
 
             // get middle num

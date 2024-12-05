@@ -37,10 +37,10 @@ impl Day3 {
         for line in lines {
             let captures = re.captures_iter(line);
             for capture in captures {
-                if let Some(_) = capture.name("do") {
+                if capture.name("do").is_some() {
                     on = true;
                     continue;
-                } else if let Some(_) = capture.name("dont") {
+                } else if capture.name("dont").is_some() {
                     on = false;
                     continue;
                 } else if !on {

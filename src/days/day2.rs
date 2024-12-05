@@ -34,11 +34,7 @@ impl Day2 {
         for i in 1..levels.len() {
             if i == 1 {
                 // check the first one increasing or decreasing
-                if levels[i] < levels[i - 1] {
-                    increasing = false;
-                } else {
-                    increasing = true;
-                }
+                increasing = levels[i] >= levels[i - 1];
             }
             // not constantly inc/dec
             if (increasing && levels[i] < levels[i - 1])
@@ -47,7 +43,7 @@ impl Day2 {
                 return false;
             }
             let diff = (levels[i] - levels[i - 1]).abs();
-            if diff < 1 || diff > 3 {
+            if !(1..=3).contains(&diff) {
                 return false;
             }
         }
@@ -57,7 +53,7 @@ impl Day2 {
 
     fn test_safe_tolerant(levels: &[i32]) -> bool {
         // test whole thing
-        if Self::test_safe(&levels) {
+        if Self::test_safe(levels) {
             return true;
         }
         // test missing front
@@ -85,7 +81,7 @@ impl Day for Day2 {
 
         input
             .iter()
-            .fold(0, |acc, levels| acc + Self::test_safe(&levels) as i32)
+            .fold(0, |acc, levels| acc + Self::test_safe(levels) as i32)
             .to_string()
     }
 
@@ -95,7 +91,7 @@ impl Day for Day2 {
         input
             .iter()
             .fold(0, |acc, levels| {
-                acc + Self::test_safe_tolerant(&levels) as i32
+                acc + Self::test_safe_tolerant(levels) as i32
             })
             .to_string()
     }

@@ -28,7 +28,7 @@ impl Day4 {
     /// return the indicies of all x's
     /// (column,row)
     // O(n)
-    fn walk(input: &Vec<Vec<char>>, needle: &char) -> Vec<(isize, isize)> {
+    fn walk(input: &[Vec<char>], needle: &char) -> Vec<(isize, isize)> {
         let mut ret = vec![];
         for (row_ind, row) in input.iter().enumerate() {
             for (col_ind, col) in row.iter().enumerate() {
@@ -41,7 +41,7 @@ impl Day4 {
     }
 
     /// actually find all the xmas
-    fn find_xmas(input: &Vec<Vec<char>>, x_coords: &[(isize, isize)]) -> usize {
+    fn find_xmas(input: &[Vec<char>], x_coords: &[(isize, isize)]) -> usize {
         let mut ret = 0;
         for x_coord in x_coords {
             for dir in Direction::iter() {
@@ -53,7 +53,7 @@ impl Day4 {
 
     /// returns the number of xmases started by a single x
     fn process_single_xmas(
-        input: &Vec<Vec<char>>,
+        input: &[Vec<char>],
         x_coord: &(isize, isize),
         m_coord: Option<&(isize, isize)>,
         a_coord: Option<&(isize, isize)>,
@@ -64,7 +64,7 @@ impl Day4 {
         let col_max = input[0].len() as isize - 1;
 
         // handle no m
-        if let None = m_coord {
+        if m_coord.is_none() {
             let modded_coords = curr_direction.mod_coords(x_coord);
             if modded_coords.0 < 0
                 || modded_coords.1 < 0
@@ -87,7 +87,7 @@ impl Day4 {
         }
 
         // handle no a
-        if let None = a_coord {
+        if a_coord.is_none() {
             let Some(m_coord_inner) = m_coord else {
                 // no more letters in this direction
                 return 0;
@@ -114,7 +114,7 @@ impl Day4 {
         }
 
         // handle no s
-        if let None = s_coord {
+        if s_coord.is_none() {
             let Some(a_coord_inner) = a_coord else {
                 // no more letters in this direction
                 return 0;
@@ -136,7 +136,7 @@ impl Day4 {
         0
     }
 
-    fn find_x_mas(input: &Vec<Vec<char>>, a_coords: &[(isize, isize)]) -> usize {
+    fn find_x_mas(input: &[Vec<char>], a_coords: &[(isize, isize)]) -> usize {
         let row_max = input.len() as isize - 1;
         let col_max = input[0].len() as isize - 1;
         let mut ret = 0;
