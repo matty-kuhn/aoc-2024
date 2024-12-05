@@ -5,7 +5,7 @@ use day4::Day4;
 use day5::Day5;
 use std::fs;
 
-pub const CURRENT_DAY: i8 = 4;
+pub const CURRENT_DAY: i8 = 5;
 
 mod day1;
 mod day2;
