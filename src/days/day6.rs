@@ -48,7 +48,7 @@ impl Day6 {
 
         let mut visited = HashSet::new();
         loop {
-            if !visited.insert(((curr_pos.col, curr_pos.row), curr_dir)) {
+            if !visited.insert((curr_pos, curr_dir)) {
                 return true;
             }
             let temp = curr_pos;
@@ -171,8 +171,8 @@ impl Day for Day6 {
         let mut cycles = 0;
         let mut tries = HashSet::new();
         let mut map_clone = map.clone();
-        for (pt, dir) in traversed_pts {
-            let mut pt_cop = pt;
+        for (pt, dir) in &traversed_pts {
+            let mut pt_cop = *pt;
             dir.mod_coords(&mut pt_cop);
             if pt_cop.col > col_max || pt_cop.col < 0 || pt_cop.row > row_max || pt_cop.row < 0 {
                 // exited the map, skip this check
@@ -189,7 +189,6 @@ impl Day for Day6 {
             map_clone[pt_cop.row as usize][pt_cop.col as usize] = GridTag::Open;
             tries.insert(pt_cop);
         }
-        dbg!(tries.len());
 
         cycles.to_string()
     }
@@ -247,28 +246,4 @@ enum GridTag {
 struct Point {
     col: isize,
     row: isize,
-}
-
-impl Point {
-    fn touchers(&self) -> [Point; 4] {
-        let Point { col, row } = self;
-        [
-            Point {
-                col: col + 1,
-                row: *row,
-            },
-            Point {
-                col: col - 1,
-                row: *row,
-            },
-            Point {
-                col: *col,
-                row: row + 1,
-            },
-            Point {
-                col: *col,
-                row: row - 1,
-            },
-        ]
-    }
 }
