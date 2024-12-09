@@ -27,7 +27,7 @@ pub trait Day {
 }
 
 pub fn get_day_input(day: &str) -> String {
-    fs::read_to_string(format!("inputs/{}.txt", day))
+    fs::read_to_string(format!("../inputs/{}.txt", day))
         .expect("Something went wrong reading the file")
 }
 
