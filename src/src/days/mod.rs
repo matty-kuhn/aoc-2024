@@ -2,6 +2,7 @@ use day1::Day1;
 use day10::Day10;
 use day11::Day11;
 use day12::Day12;
+use day13::Day13;
 use day2::Day2;
 use day3::Day3;
 use day4::Day4;
@@ -18,6 +19,7 @@ mod day1;
 mod day10;
 mod day11;
 mod day12;
+mod day13;
 mod day2;
 mod day3;
 mod day4;
@@ -55,6 +57,7 @@ pub fn day_builder(day: i8, input_name: &str) -> Box<dyn Day> {
         10 => Box::new(Day10::new(get_day_input(input_name))) as Box<dyn Day>,
         11 => Box::new(Day11::new(get_day_input(input_name))) as Box<dyn Day>,
         12 => Box::new(Day12::new(get_day_input(input_name))) as Box<dyn Day>,
+        13 => Box::new(Day13::new(get_day_input(input_name))) as Box<dyn Day>,
         _ => panic!("Day {} not implemented yet", day),
     }
 }
