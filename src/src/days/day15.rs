@@ -105,7 +105,7 @@ impl Day15 {
                         curr_pos = (col_idx, idx);
                         Space2::Empty
                     }
-                    _ => panic!("Invalid character in input {c}"),
+                    _ => panic!("Invalid character in input"),
                 })
                 .collect();
             spaces.push(row);
@@ -130,29 +130,90 @@ impl Day for Day15 {
         let (mut map, directions) = self.parse_input();
         for direction in directions {
             map.process_move(direction);
-            // let mut input = String::new();
-            // std::io::stdin().read_line(&mut input).unwrap();
         }
-        println!("{}", map);
         map.get_all_gps().to_string()
     }
 
     fn part2(&self) -> String {
         let (mut map, directions) = self.parse_input_doubled();
-        // for direction in directions {
-        //     map.process_move(direction);
-        //     println!("{}", map);
-        //     let mut input = String::new();
-        //     std::io::stdin().read_line(&mut input).unwrap();
-        // }
-        // map.get_all_gps().to_string()
-        todo!()
+        for direction in directions {
+            map.process_move(direction);
+        }
+        map.get_all_gps().to_string()
     }
 }
 
 struct Map2 {
     spaces: Vec<Vec<Space2>>,
     curr_pos: (usize, usize),
+}
+
+impl Map2 {
+    fn get_all_gps(&self) -> usize {
+        let mut sum = 0;
+        for (row_idx, row) in self.spaces.iter().enumerate() {
+            for (col_idx, space) in row.iter().enumerate() {
+                if space == &Space2::LeftBox {
+                    sum += 100 * row_idx + col_idx;
+                }
+            }
+        }
+        sum
+    }
+
+    fn process_move(&mut self, dir: Direction) {
+        let (new_x, new_y) = dir.mod_coords(self.curr_pos);
+        // the easy cases first
+        if self.spaces[new_y][new_x] == Space2::Wall {
+            return;
+        }
+        if self.spaces[new_y][new_x] == Space2::Empty {
+            self.curr_pos = (new_x, new_y);
+            return;
+        }
+        // if there is a box, we make that square empty, and every square up to the next empty
+        // becomes a box. if there is no empty, then we don't do any changes
+        let mut copy = self.spaces.clone();
+        let mut idx = 0;
+        // let check = dir.mod_coords((new_x, new_y));
+        let mut coords_to_move = vec![self.curr_pos];
+        loop {
+            if idx >= coords_to_move.len() {
+                break;
+            }
+            let check = dir.mod_coords(coords_to_move[idx]);
+            match self.spaces[check.1][check.0] {
+                Space2::Empty => {}
+                Space2::Wall => return,
+                Space2::LeftBox => {
+                    if !coords_to_move.contains(&(check.0, check.1)) {
+                        coords_to_move.push((check.0, check.1));
+                    }
+                    if !coords_to_move.contains(&(check.0 + 1, check.1)) {
+                        coords_to_move.push((check.0 + 1, check.1));
+                    }
+                }
+                Space2::RightBox => {
+                    if !coords_to_move.contains(&(check.0, check.1)) {
+                        coords_to_move.push((check.0, check.1));
+                    }
+                    if !coords_to_move.contains(&(check.0 - 1, check.1)) {
+                        coords_to_move.push((check.0 - 1, check.1));
+                    }
+                }
+            }
+            idx += 1;
+        }
+        for coord in &coords_to_move {
+            copy[coord.1][coord.0] = Space2::Empty;
+        }
+        for coord in &coords_to_move {
+            let prev = dir.mod_coords(*coord);
+            copy[prev.1][prev.0] = self.spaces[coord.1][coord.0];
+        }
+        self.spaces = copy;
+        self.curr_pos = (new_x, new_y);
+    }
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -183,10 +244,6 @@ impl Map {
 
     fn process_move(&mut self, dir: Direction) {
         let (new_x, new_y) = dir.mod_coords(self.curr_pos);
-        // println!("old coords: {}, {}", self.curr_pos.0, self.curr_pos.1);
-        // println!("new coords: {}, {}", new_x, new_y);
-        // println!("space: {:?}", self.spaces[new_y][new_x]);
-        // println!("direction: {:?}", dir);
         // the easy cases first
         if self.spaces[new_y][new_x] == Space::Wall {
             return;
@@ -279,19 +336,25 @@ impl Display for Map2 {
                     write!(f, "@")?;
                     continue;
                 }
-                write!(
-                    f,
-                    "{}",
-                    match space {
-                        Space2::Wall => '#',
-                        Space2::Empty => '.',
-                        Space2::LeftBox => '[',
-                        Space2::RightBox => ']',
-                    }
-                )?;
+                write!(f, "{}", space)?;
             }
             writeln!(f)?;
         }
         Ok(())
+    }
+}
+
+impl Display for Space2 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Space2::Wall => '#',
+                Space2::Empty => '.',
+                Space2::LeftBox => '[',
+                Space2::RightBox => ']',
+            }
+        )
     }
 }
