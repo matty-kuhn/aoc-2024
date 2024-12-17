@@ -56,47 +56,19 @@ impl Day for Day17 {
 
     fn part2(&self) -> String {
         let state = self.parse_input();
-        // runner(state).to_string()
         find_replicate_rev(state).to_string()
     }
 }
 
-fn runner(state: State) -> u64 {
-    let run = Arc::new(AtomicBool::new(true));
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(16)
-        .build_global()
-        .unwrap();
-    // tried to do it right way and found this as too high, so lets just try counting down lol
-    (0..((164278899142584 / 2) / 100_000_000))
-        // .rev()
-        // .collect::<Vec<_>>()
-        .into_par_iter()
-        .map(|init| {
-            let init = init * 100_000_000;
-            if run.load(std::sync::atomic::Ordering::SeqCst) == false {
-                0
-            } else {
-                let state_clone = state.clone();
-                let run_clone = run.clone();
-                runner_inner(state_clone, run_clone, init)
-            }
-        })
-        .filter(|x| *x > 0)
-        .min()
-        .unwrap()
-}
-
-fn runner_inner(mut state: State, run: Arc<AtomicBool>, init: u64) -> u64 {
-    state.find_replicate_sync(init, run)
-}
-
-fn find_replicate_rev(mut state: State) -> u64 {
+// super stolen, silly off by 2 lol
+fn find_replicate_rev(state: State) -> u64 {
+    dbg!(&state);
     let mut checks = vec![(0, 0)];
+    let mut sols = vec![];
     while let Some((count, guess)) = checks.pop() {
         for idx in 0..8 {
             let mut temp = state.clone();
-            temp.a = 8 * guess + idx;
+            temp.a = guess + idx;
             temp.ip = 0;
             temp.output = vec![];
             temp.run();
@@ -107,13 +79,15 @@ fn find_replicate_rev(mut state: State) -> u64 {
 
             if state.instrs[(state.instrs.len() - 1) - count] == temp.output[0] {
                 if count + 1 == temp.instrs.len() {
-                    return guess;
+                    sols.push(guess + idx);
+                    continue;
                 }
-                checks.push((count + 1, (8 * guess + idx)));
+                checks.push((count + 1, (8 * (guess + idx))));
             }
         }
     }
-    0
+    dbg!(&sols);
+    *sols.iter().min().unwrap()
 }
 
 #[derive(Debug, Clone)]
@@ -127,49 +101,6 @@ struct State {
 }
 
 impl State {
-    fn find_replicate_sync(&mut self, init: u64, run: Arc<AtomicBool>) -> u64 {
-        let mut curr = init;
-        self.a = curr;
-        // while run.load(std::sync::atomic::Ordering::SeqCst) {
-        loop {
-            if self.replicate_inner() {
-                println!("found!: {curr}");
-                run.swap(false, std::sync::atomic::Ordering::SeqCst);
-                return curr;
-            }
-            if curr == init + 100_000_000 {
-                return 0;
-            }
-            curr += 1;
-            self.a = curr;
-            self.b = 0;
-            self.c = 0;
-            self.output = vec![];
-            self.ip = 0;
-        }
-        // 0
-    }
-
-    fn replicate_inner(&mut self) -> bool {
-        let mut curr = 0;
-        while self.ip < self.instrs.len() - 1 {
-            self.step(self.instrs[self.ip] as u8, self.instrs[self.ip + 1]);
-            if self.output.len() > curr {
-                if self.output.len() > self.instrs.len() {
-                    return false;
-                }
-                if self.instrs[curr] != self.output[curr] {
-                    return false;
-                }
-                curr += 1;
-            }
-        }
-        if self.instrs != self.output {
-            return false;
-        }
-        true
-    }
-
     fn run(&mut self) {
         while self.ip < self.instrs.len() - 1 {
             self.step(self.instrs[self.ip] as u8, self.instrs[self.ip + 1]);
