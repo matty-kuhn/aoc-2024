@@ -1,6 +1,4 @@
 use super::Day;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::sync::{atomic::AtomicBool, Arc};
 
 pub struct Day17 {
     input: String,
