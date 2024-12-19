@@ -25,7 +25,7 @@ use day8::Day8;
 use day9::Day9;
 use std::fs;
 
-pub const CURRENT_DAY: i8 = 18;
+pub const CURRENT_DAY: i8 = 19;
 
 mod day1;
 mod day10;

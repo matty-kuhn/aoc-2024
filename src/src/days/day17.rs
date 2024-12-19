@@ -32,8 +32,8 @@ impl Day17 {
                 let mut split = line.split(':');
                 split.next();
                 let chars: Vec<_> = split.next().unwrap().trim().split(',').collect();
-                for idx in 0..chars.len() {
-                    ret.instrs.push(chars[idx].parse().unwrap())
+                for ch in chars {
+                    ret.instrs.push(ch.parse().unwrap())
                 }
             }
         }

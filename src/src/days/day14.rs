@@ -56,7 +56,7 @@ impl Day14 {
         let mut img = Image::new((MAX_X + 1) as u32, (MAX_Y + 1) as u32);
         for y in 0..=MAX_Y {
             for x in 0..=MAX_X {
-                if let Some(_) = map.get(&(x, y)) {
+                if map.get(&(x, y)).is_some() {
                     img.set_pixel(x as u32, y as u32, Pixel::new(0, 0, 0));
                 } else {
                     img.set_pixel(x as u32, y as u32, Pixel::new(255, 255, 255));
@@ -137,25 +137,25 @@ impl Day for Day14 {
             );
             // println!("pre-adjust: {final_pos:?}");
             if velocity.0 > 0 {
-                final_pos.0 = final_pos.0 % (MAX_X + 1);
+                final_pos.0 %= MAX_X + 1;
                 if final_pos.0 > MAX_X {
                     println!("adjust x pos: {final_pos:?}");
                 }
             }
             if velocity.1 > 0 {
-                final_pos.1 = final_pos.1 % (MAX_Y + 1);
+                final_pos.1 %= MAX_Y + 1;
                 if final_pos.1 > MAX_Y {
                     println!("adjust y pos: {final_pos:?}");
                 }
             }
             if velocity.0 < 0 {
-                final_pos.0 = final_pos.0 % (MAX_X + 1);
+                final_pos.0 %= MAX_X + 1;
                 if final_pos.0 < 0 {
                     final_pos.0 += MAX_X + 1;
                 }
             }
             if velocity.1 < 0 {
-                final_pos.1 = final_pos.1 % (MAX_Y + 1);
+                final_pos.1 %= MAX_Y + 1;
                 if final_pos.1 < 0 {
                     final_pos.1 += MAX_Y + 1;
                 }
@@ -179,25 +179,25 @@ impl Day for Day14 {
                 let mut final_pos = (start_pos.0 + velocity.0, start_pos.1 + velocity.1);
                 // println!("pre-adjust: {final_pos:?}");
                 if velocity.0 > 0 {
-                    final_pos.0 = final_pos.0 % (MAX_X + 1);
+                    final_pos.0 %= MAX_X + 1;
                     if final_pos.0 > MAX_X {
                         println!("adjust x pos: {final_pos:?}");
                     }
                 }
                 if velocity.1 > 0 {
-                    final_pos.1 = final_pos.1 % (MAX_Y + 1);
+                    final_pos.1 %= MAX_Y + 1;
                     if final_pos.1 > MAX_Y {
                         println!("adjust y pos: {final_pos:?}");
                     }
                 }
                 if velocity.0 < 0 {
-                    final_pos.0 = final_pos.0 % (MAX_X + 1);
+                    final_pos.0 %= MAX_X + 1;
                     if final_pos.0 < 0 {
                         final_pos.0 += MAX_X + 1;
                     }
                 }
                 if velocity.1 < 0 {
-                    final_pos.1 = final_pos.1 % (MAX_Y + 1);
+                    final_pos.1 %= MAX_Y + 1;
                     if final_pos.1 < 0 {
                         final_pos.1 += MAX_Y + 1;
                     }

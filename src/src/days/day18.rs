@@ -71,7 +71,7 @@ impl Day for Day18 {
             steps += 1;
             map.build_maze_partial(&input[STEPS..steps]);
         }
-        format!("{:?}", input[steps-1])
+        format!("{:?}", input[steps - 1])
     }
 }
 
@@ -107,25 +107,17 @@ impl Map {
             return vec![];
         }
         let mut ret = vec![];
-        if pt.0 > 0 {
-            if self.grid[pt.1][pt.0 - 1] != '#' {
-                ret.push(((pt.0 - 1, pt.1), 1));
-            }
+        if pt.0 > 0 && self.grid[pt.1][pt.0 - 1] != '#' {
+            ret.push(((pt.0 - 1, pt.1), 1));
         }
-        if pt.1 > 0 {
-            if self.grid[pt.1 - 1][pt.0] != '#' {
-                ret.push(((pt.0, pt.1 - 1), 1));
-            }
+        if pt.1 > 0 && self.grid[pt.1 - 1][pt.0] != '#' {
+            ret.push(((pt.0, pt.1 - 1), 1));
         }
-        if pt.0 < self.grid[0].len() - 1 {
-            if self.grid[pt.1][pt.0 + 1] != '#' {
-                ret.push(((pt.0 + 1, pt.1), 1));
-            }
+        if pt.0 < self.grid[0].len() - 1 && self.grid[pt.1][pt.0 + 1] != '#' {
+            ret.push(((pt.0 + 1, pt.1), 1));
         }
-        if pt.1 < self.grid.len() - 1 {
-            if self.grid[pt.1 + 1][pt.0] != '#' {
-                ret.push(((pt.0, pt.1 + 1), 1));
-            }
+        if pt.1 < self.grid.len() - 1 && self.grid[pt.1 + 1][pt.0] != '#' {
+            ret.push(((pt.0, pt.1 + 1), 1));
         }
         ret
     }
@@ -137,7 +129,7 @@ impl Display for Map {
             for col in row {
                 write!(f, "{col}")?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }

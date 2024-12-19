@@ -71,10 +71,10 @@ impl Day15 {
                 }
             }
             ret.push_str(&new_line);
-            ret.push_str("\n");
+            ret.push('\n');
         }
         for line in lines[directions_start..].iter() {
-            ret.push_str("\n");
+            ret.push('\n');
             ret.push_str(line);
         }
 
