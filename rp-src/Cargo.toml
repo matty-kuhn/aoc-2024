@@ -1,0 +1,23 @@
+[package]
+name = "rp-src"
+version = "0.1.0"
+edition = "2021"
+
+# [[bin]]
+# name = "day1"
+# path = "bin/day1.rs"
+
+[dependencies]
+cortex-m = "0.7.7"
+cortex-m-rt = "0.7.5"
+critical-section = "1.2.0"
+defmt = "0.3.8"
+defmt-rtt = "0.4.1"
+defmt-serial = "0.10.0"
+embedded-alloc = "0.6.0"
+embedded-hal = "1.0.0"
+panic-halt = "1.0.0"
+rp235x-hal = { version = "0.2.0", features = ["binary-info", "critical-section-impl", "rt", "defmt"] }
+static_cell = "2.1.0"
+usb-device = "0.3.2"
+usbd-serial = "0.2.2"
