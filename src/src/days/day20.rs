@@ -1,4 +1,4 @@
-use pathfinding::directed::astar::astar;
+use pathfinding::directed::astar::{astar, astar_bag, astar_bag_collect};
 
 use super::Day;
 
@@ -39,75 +39,83 @@ impl Day for Day20 {
             |p| p.0 == map.get_end(),
         )
         .unwrap();
+        let mut best_paths = astar_bag_collect(
+            &map.get_start(),
+            |p| map.get_peers(p.0, p.1),
+            |p| {
+                let end = map.get_end();
+                (end.0 as isize - p.0 .0 as isize).pow(2) as usize
+                    + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
+            },
+            |p| p.0 == map.get_end(),
+        )
+        .unwrap();
 
         // best path, optimal cheat
         let mut paths = 0;
-        for y in 1..map.grid.len() - 1 {
-            for x in 1..map.grid[0].len() - 1 {
-                if map.grid[y][x].0 == '#' {
-                    map.grid[y][x].0 = '.';
-                }
-
-                let Some(best_path) = astar(
-                    &(map.get_start().0, map.get_start().1 - 2),
-                    |p| map.get_peers(p.0, p.1),
-                    |p| {
-                        let end = map.get_end();
-                        (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-                            + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-                    },
-                    |p| p.0 == map.get_end(),
-                ) else {
-                    map.grid[y][x].0 = '#';
-                    continue;
-                };
-
-                if best_path.1 < worst_path.1 {
-                    paths += 1;
-                }
-
-                map.grid[y][x].0 = '#';
-            }
-            println!("done {y}");
-        }
-        // println!(
-        //     "cost worst {} best {} savings {}",
-        //     worst_path.1,
-        //     best_path.1,
-        //     worst_path.1 - best_path.1
-        // );
-        // todo!();
-        // map.print_path(&best_path.0);
-        // while worst_path.1 as i64 - best_path.1 as i64 >= 100 {
-        //     println!(
-        //         "cost worst {} best {} savings {}",
-        //         worst_path.1,
-        //         best_path.1,
-        //         worst_path.1 as i64 - best_path.1 as i64
-        //     );
-        //     paths += 1;
-        //     // modify the map to make the cheated square be max weight, so we cheat somewhere else
-        //     // keep doing that until time_savings < 100
-        //     for pt in &best_path.0 {
-        //         // find first pt with < 2 cheats left, raise cost
-        //         if pt.1 < 2 {
-        //             map.grid[pt.0 .1][pt.0 .0].1 = 10_000_000_000;
-        //             break;
+        // for y in 1..map.grid.len() - 1 {
+        //     for x in 1..map.grid[0].len() - 1 {
+        //         if map.grid[y][x].0 == '#' {
+        //             map.grid[y][x].0 = '.';
         //         }
+        //
+        //         let Some(best_path) = astar(
+        //             &(map.get_start().0, map.get_start().1 - 2),
+        //             |p| map.get_peers(p.0, p.1),
+        //             |p| {
+        //                 let end = map.get_end();
+        //                 (end.0 as isize - p.0 .0 as isize).pow(2) as usize
+        //                     + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
+        //             },
+        //             |p| p.0 == map.get_end(),
+        //         ) else {
+        //             map.grid[y][x].0 = '#';
+        //             continue;
+        //         };
+        //
+        //         if best_path.1 < worst_path.1 {
+        //             paths += 1;
+        //         }
+        //
+        //         map.grid[y][x].0 = '#';
         //     }
-        //     best_path = astar(
-        //         &map.get_start(),
-        //         |p| map.get_peers(p.0, p.1),
-        //         |p| {
-        //             let end = map.get_end();
-        //             (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-        //                 + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-        //         },
-        //         |p| p.0 == map.get_end(),
-        //     )
-        //     .unwrap();
-        //     // map.print_path(&best_path.0);
+        //     println!("done {y}");
         // }
+        // map.print_path(&best_path.0);
+        // basically gonna have to dfs where for each best path, we set its cheat point to inf, in
+        // order to count total num of good paths
+        while worst_path.1 as i64 - best_paths.1 as i64 >= 100 {
+            // while worst_path.1 as i64 - best_paths.1 as i64 >= 20 {
+            println!(
+                "cost worst {} best {} savings {} num paths {}",
+                worst_path.1,
+                best_paths.1,
+                worst_path.1 as i64 - best_paths.1 as i64,
+                best_paths.0.len()
+            );
+            paths += best_paths.0.len();
+            // modify the map to make the cheated square be max weight, so we cheat somewhere else
+            // keep doing that until time_savings < 100
+            for pt in &best_paths.0[0] {
+                // find first pt with < 2 cheats left, raise cost
+                if pt.1 < 2 && map.grid[pt.0 .1][pt.0 .0].0 == '#' {
+                    map.grid[pt.0 .1][pt.0 .0].1 = 10_000_000_000;
+                    break;
+                }
+            }
+            best_paths = astar_bag_collect(
+                &map.get_start(),
+                |p| map.get_peers(p.0, p.1),
+                |p| {
+                    let end = map.get_end();
+                    (end.0 as isize - p.0 .0 as isize).pow(2) as usize
+                        + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
+                },
+                |p| p.0 == map.get_end(),
+            )
+            .unwrap();
+            // map.print_path(&best_path.0);
+        }
         paths.to_string()
     }
 
