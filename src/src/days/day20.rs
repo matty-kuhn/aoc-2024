@@ -1,4 +1,4 @@
-use pathfinding::directed::astar::{astar, astar_bag, astar_bag_collect};
+use pathfinding::directed::astar::astar;
 
 use super::Day;
 
@@ -12,241 +12,106 @@ impl Day20 {
     }
 
     fn parse_input(&self) -> Map {
-        Map {
-            grid: self.input.lines().fold(Vec::new(), |mut acc, line| {
-                acc.push(line.chars().map(|ch| (ch, 1)).collect());
-                acc
-            }),
-        }
+        let mut start = (0, 0);
+        let mut end = (0, 0);
+        let grid: Vec<Vec<char>> = self
+            .input
+            .lines()
+            .enumerate()
+            .map(|(lidx, l)| {
+                l.chars()
+                    .enumerate()
+                    .map(|(cidx, c)| {
+                        if c == 'S' {
+                            start = (cidx, lidx);
+                            '.'
+                        } else if c == 'E' {
+                            end = (cidx, lidx);
+                            '.'
+                        } else {
+                            c
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+
+        let path = astar(
+            &start,
+            |p| {
+                let mut ret = vec![];
+                for (dx, dy) in &[(0, 1), (1, 0), (0, -1), (-1, 0)] {
+                    let (x, y) = (p.0 as isize + dx, p.1 as isize + dy);
+                    if x >= 0 && y >= 0 {
+                        let (x, y) = (x as usize, y as usize);
+                        if grid[y][x] == '.' {
+                            ret.push(((x, y), 1 + p.1));
+                        }
+                    }
+                }
+                ret
+            },
+            |_| 1,
+            |p| p == &end,
+        )
+        .unwrap()
+        .0;
+
+        Map { path }
     }
 }
 
 impl Day for Day20 {
     fn part1(&self) -> String {
-        let mut map = self.parse_input();
+        let map = self.parse_input();
 
-        // loading points as (((coord x, coord y), cheats_left), 1)
-
-        // worst path, no cheating
-        let worst_path = astar(
-            &(map.get_start().0, map.get_start().1 - 2),
-            |p| map.get_peers(p.0, p.1),
-            |p| {
-                let end = map.get_end();
-                (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-                    + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-            },
-            |p| p.0 == map.get_end(),
+        // walk path, and then find any point that can reach another point within 2 blocks
+        // i misundertood q so needed to read reddit to figure out what it was asking
+        map.path
+            .iter()
+            .enumerate()
+            .map(|(time_to_pt, pt)|
+            // check the entire rest of the path after this
+            map.path.iter()
+                .enumerate()
+                .skip(time_to_pt + 1)
+                .map(move |(time_to_pt2, pt2)| {
+                let d = (pt.0 as isize - pt2.0 as isize).abs() + (pt.1 as isize - pt2.1 as isize).abs();
+                if d <=2 && time_to_pt2 - time_to_pt - d as usize >= 100 {
+                    1
+                } else {0}
+            })
         )
-        .unwrap();
-        let mut best_paths = astar_bag_collect(
-            &map.get_start(),
-            |p| map.get_peers(p.0, p.1),
-            |p| {
-                let end = map.get_end();
-                (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-                    + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-            },
-            |p| p.0 == map.get_end(),
-        )
-        .unwrap();
-
-        // best path, optimal cheat
-        let mut paths = 0;
-        // for y in 1..map.grid.len() - 1 {
-        //     for x in 1..map.grid[0].len() - 1 {
-        //         if map.grid[y][x].0 == '#' {
-        //             map.grid[y][x].0 = '.';
-        //         }
-        //
-        //         let Some(best_path) = astar(
-        //             &(map.get_start().0, map.get_start().1 - 2),
-        //             |p| map.get_peers(p.0, p.1),
-        //             |p| {
-        //                 let end = map.get_end();
-        //                 (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-        //                     + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-        //             },
-        //             |p| p.0 == map.get_end(),
-        //         ) else {
-        //             map.grid[y][x].0 = '#';
-        //             continue;
-        //         };
-        //
-        //         if best_path.1 < worst_path.1 {
-        //             paths += 1;
-        //         }
-        //
-        //         map.grid[y][x].0 = '#';
-        //     }
-        //     println!("done {y}");
-        // }
-        // map.print_path(&best_path.0);
-        // basically gonna have to dfs where for each best path, we set its cheat point to inf, in
-        // order to count total num of good paths
-        while worst_path.1 as i64 - best_paths.1 as i64 >= 100 {
-            // while worst_path.1 as i64 - best_paths.1 as i64 >= 20 {
-            println!(
-                "cost worst {} best {} savings {} num paths {}",
-                worst_path.1,
-                best_paths.1,
-                worst_path.1 as i64 - best_paths.1 as i64,
-                best_paths.0.len()
-            );
-            paths += best_paths.0.len();
-            // modify the map to make the cheated square be max weight, so we cheat somewhere else
-            // keep doing that until time_savings < 100
-            for pt in &best_paths.0[0] {
-                // find first pt with < 2 cheats left, raise cost
-                if pt.1 < 2 && map.grid[pt.0 .1][pt.0 .0].0 == '#' {
-                    map.grid[pt.0 .1][pt.0 .0].1 = 10_000_000_000;
-                    break;
-                }
-            }
-            best_paths = astar_bag_collect(
-                &map.get_start(),
-                |p| map.get_peers(p.0, p.1),
-                |p| {
-                    let end = map.get_end();
-                    (end.0 as isize - p.0 .0 as isize).pow(2) as usize
-                        + (end.1 as isize - p.0 .1 as isize).pow(2) as usize
-                },
-                |p| p.0 == map.get_end(),
-            )
-            .unwrap();
-            // map.print_path(&best_path.0);
-        }
-        paths.to_string()
+            .flatten()
+            .sum::<usize>()
+            .to_string()
     }
 
     fn part2(&self) -> String {
-        todo!()
+        let map = self.parse_input();
+
+        map.path
+            .iter()
+            .enumerate()
+            .map(|(time_to_pt, pt)|
+            // check the entire rest of the path after this
+            map.path.iter()
+                .enumerate()
+                .skip(time_to_pt + 1)
+                .map(move |(time_to_pt2, pt2)| {
+                let d = (pt.0 as isize - pt2.0 as isize).abs() + (pt.1 as isize - pt2.1 as isize).abs();
+                if d <=20 && time_to_pt2 - time_to_pt - d as usize >= 100 {
+                    1
+                } else {0}
+            })
+        )
+            .flatten()
+            .sum::<usize>()
+            .to_string()
     }
 }
 
+#[derive(Debug)]
 struct Map {
-    grid: Vec<Vec<(char, usize)>>,
-    // grid: Vec<Vec<char>>,
-}
-
-impl Map {
-    fn print_path(&self, path: &[((usize, usize), u8)]) {
-        for (row_idx, row) in self.grid.iter().enumerate() {
-            for (col_idx, col) in row.iter().enumerate() {
-                if path.contains(&((col_idx, row_idx), 2)) {
-                    print!("O");
-                    continue;
-                }
-                if path.contains(&((col_idx, row_idx), 1)) {
-                    print!("1");
-                    continue;
-                }
-                if path.contains(&((col_idx, row_idx), 0)) {
-                    print!("2");
-                    continue;
-                }
-                print!("{}", col.0);
-            }
-            println!()
-        }
-    }
-
-    fn is_empty(ch: char) -> bool {
-        ch == '.' || ch == 'S' || ch == 'E'
-    }
-
-    fn get_peers(
-        &self,
-        node: (usize, usize),
-        mut cheats_left: u8,
-    ) -> Vec<(((usize, usize), u8), usize)> {
-        let mut ret = vec![];
-        if node.0 > 0 {
-            let curr = self.grid[node.1][node.0 - 1];
-            // check left
-            if Self::is_empty(curr.0) {
-                // we cheated right before this, so we need to use up last cheat
-                if cheats_left == 1 {
-                    cheats_left -= 1;
-                }
-                ret.push((((node.0 - 1, node.1), cheats_left), curr.1));
-            } else {
-                // not empty but we can cheat
-                if cheats_left > 1 {
-                    ret.push((((node.0 - 1, node.1), cheats_left - 1), curr.1));
-                }
-            }
-        }
-        if node.0 < self.grid[0].len() - 1 {
-            let curr = self.grid[node.1][node.0 + 1];
-            // check right
-            if Self::is_empty(curr.0) {
-                // we cheated right before this, so we need to use up last cheat
-                if cheats_left == 1 {
-                    cheats_left -= 1;
-                }
-                ret.push((((node.0 + 1, node.1), cheats_left), curr.1));
-            } else {
-                // not empty but we can cheat
-                if cheats_left > 1 {
-                    ret.push((((node.0 + 1, node.1), cheats_left - 1), curr.1));
-                }
-            }
-        }
-        if node.1 > 0 {
-            let curr = self.grid[node.1 - 1][node.0];
-            // check up
-            if Self::is_empty(curr.0) {
-                // we cheated right before this, so we need to use up last cheat
-                if cheats_left == 1 {
-                    cheats_left -= 1;
-                }
-                ret.push((((node.0, node.1 - 1), cheats_left), curr.1));
-            } else {
-                // not empty but we can cheat
-                if cheats_left > 1 {
-                    ret.push((((node.0, node.1 - 1), cheats_left - 1), curr.1));
-                }
-            }
-        }
-        if node.1 < self.grid.len() - 1 {
-            let curr = self.grid[node.1 + 1][node.0];
-            // check down
-            if Self::is_empty(curr.0) {
-                // we cheated right before this, so we need to use up last cheat
-                if cheats_left == 1 {
-                    cheats_left -= 1;
-                }
-                ret.push((((node.0, node.1 + 1), cheats_left), curr.1));
-            } else {
-                // not empty but we can cheat
-                if cheats_left > 1 {
-                    ret.push((((node.0, node.1 + 1), cheats_left - 1), curr.1));
-                }
-            }
-        }
-
-        ret
-    }
-
-    fn get_start(&self) -> ((usize, usize), u8) {
-        for (row_idx, row) in self.grid.iter().enumerate() {
-            for (col_idx, col) in row.iter().enumerate() {
-                if col.0 == 'S' {
-                    return ((col_idx, row_idx), 2);
-                }
-            }
-        }
-        unreachable!()
-    }
-    fn get_end(&self) -> (usize, usize) {
-        for (row_idx, row) in self.grid.iter().enumerate() {
-            for (col_idx, col) in row.iter().enumerate() {
-                if col.0 == 'E' {
-                    return (col_idx, row_idx);
-                }
-            }
-        }
-        unreachable!()
-    }
+    path: Vec<(usize, usize)>,
 }
