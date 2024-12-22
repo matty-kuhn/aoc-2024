@@ -61,9 +61,90 @@ impl Day for Day21 {
     }
 
     fn part2(&self) -> String {
-        todo!()
+        self.input
+            .lines()
+            .fold(0, |acc, input| {
+                acc + get_sequence_nums(input.to_owned())
+                    .into_iter()
+                    .map(|p| shortest(&p))
+                    .min()
+                    .unwrap()
+                    * score_code(input)
+            })
+            .to_string()
     }
 }
+
+fn shortest(input: &str) -> usize {
+    // thx for cpoypasta reddit
+    let from_to_cmds = [
+        (('A', 'A'), "A"),
+        (('A', '^'), "<A"),
+        (('A', '>'), "vA"),
+        (('A', '<'), "v<<A"),
+        (('A', 'v'), "<vA"),
+        (('^', 'A'), ">A"),
+        (('^', '^'), "A"),
+        (('^', '>'), "v>A"),
+        (('^', '<'), "v<A"),
+        (('^', 'v'), "vA"),
+        (('v', 'A'), "^>A"),
+        (('v', '^'), "^A"),
+        (('v', '>'), ">A"),
+        (('v', '<'), "<A"),
+        (('v', 'v'), "A"),
+        (('<', 'A'), ">>^A"),
+        (('<', '^'), ">^A"),
+        (('<', '>'), ">>A"),
+        (('<', '<'), "A"),
+        (('<', 'v'), ">A"),
+        (('>', 'A'), "^A"),
+        (('>', '^'), "<^A"),
+        (('>', '>'), "A"),
+        (('>', '<'), "<<A"),
+        (('>', 'v'), "<A"),
+    ]
+    .into_iter()
+    .map(|(k, v)| (k, v.to_string()))
+    .collect::<HashMap<_, _>>();
+
+    let mut cache = from_to_cmds
+        .clone()
+        .into_iter()
+        .map(|(k, v)| ((k.0, k.1, 0), v.len()))
+        .collect();
+
+    let mut res = 0;
+    let mut prev = 'A';
+    for ch in input.chars() {
+        res += shortest_chars(prev, ch, 24, &from_to_cmds, &mut cache);
+        prev = ch;
+    }
+    res
+}
+
+fn shortest_chars(
+    curr_pos: char,
+    target: char,
+    depth: usize,
+    known_cmds: &HashMap<(char, char), String>,
+    cache: &mut HashMap<(char, char, usize), usize>,
+) -> usize {
+    if let Some(&res) = cache.get(&(curr_pos, target, depth)) {
+        return res;
+    }
+    let path = known_cmds.get(&(curr_pos, target)).unwrap();
+    let mut res = 0;
+    let mut prev = 'A';
+    for ch in path.chars() {
+        res += shortest_chars(prev, ch, depth - 1, &known_cmds, cache);
+        prev = ch;
+    }
+    cache.insert((curr_pos, target, depth), res);
+    res
+}
+
+// Part 1 stuff
 
 fn score_code(input: &str) -> usize {
     // first 3 chars of input are number
