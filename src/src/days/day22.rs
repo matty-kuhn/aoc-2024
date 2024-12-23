@@ -91,6 +91,5 @@ impl Day for Day22 {
             .max()
             .unwrap()
             .to_string()
-
     }
 }
