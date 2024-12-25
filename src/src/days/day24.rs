@@ -77,7 +77,7 @@ fn calc_one_wire(
 }
 
 fn calc_all_wires(wires: &mut HashMap<String, u8>, ops: &HashMap<String, Ops>) {
-    for (target, op) in ops {
+    for (target, _) in ops {
         calc_one_wire(wires, &ops, target);
     }
 }
@@ -88,7 +88,7 @@ impl Day for Day24 {
         calc_all_wires(&mut wires, &ops);
         let z_wires: Vec<(&String, &u8)> = wires
             .iter()
-            .filter(|(wire, val)| wire.starts_with("z"))
+            .filter(|(wire, _)| wire.starts_with("z"))
             .sorted_by_key(|x| x.0)
             .collect();
         let mut sum: u64 = 0;
@@ -102,198 +102,63 @@ impl Day for Day24 {
     }
 
     fn part2(&self) -> String {
-        let (og_wires, outputs) = self.parse_input();
+        let (_, outputs) = self.parse_input();
         // apparently don't need to fix, just find ones that break rules, according to reddit
         let mut bads = HashSet::new();
+        for op in &outputs {
+            let temp: Vec<_> = vec![op.1.inner().0, op.1.inner().1]
+                .into_iter()
+                .sorted()
+                .collect();
+            let (left, right) = (temp[0], temp[1]);
+            if op.0.starts_with("z") && !op.0.ends_with("45") {
+                if !matches!(op.1, Ops::Xor(_, _)) {
+                    bads.insert(op.0);
+                }
+            } else if !(left.starts_with("x") || right.starts_with("y")) {
+                if matches!(op.1, Ops::Xor(_, _)) {
+                    bads.insert(op.0);
+                }
+            } else if left.starts_with("x") && right.starts_with("y")
+                || left.starts_with("y") && right.starts_with("x")
+            {
+                if left.ends_with("00") && right.ends_with("00") {
+                    continue;
+                }
 
-        for output in &outputs {
-            if output.0.contains("z") {
-                if output.0 != "z45" {
-                    if !matches!(output.1, Ops::Xor(_, _)) {
-                        bads.insert(output.0);
+                let mut ops = vec![];
+                for inner in &outputs {
+                    if inner.1.inner().0 == op.0 || inner.1.inner().1 == op.0 {
+                        ops.push(inner.1);
                     }
                 }
-            } else {
-                match output.1 {
-                    Ops::Xor(left, right) => {
-                        if !(right.contains("x")
-                            || left.contains("y")
-                            || left.contains("x")
-                            || right.contains("y"))
-                        {
-                            bads.insert(output.0);
+                if matches!(op.1, Ops::Xor(_, _)) {
+                    // need to find other xor
+                    let mut found = false;
+                    for inner in ops {
+                        if matches!(inner, Ops::Xor(_, _)) {
+                            found = true
                         }
                     }
-                    Ops::And(left, right) | Ops::Or(left, right) => {}
-                }
-            }
-            match output.1 {
-                Ops::Xor(left, right) => {
-                    if !(left.contains("x00") && right.contains("y00")) {
-                        if left.contains("x") || right.contains("y") {
-                            let mut found = false;
-                            for gate in &outputs {
-                                match gate.1 {
-                                    Ops::Xor(left, right) => {
-                                        if left == output.0 || right == output.0 {
-                                            found = true;
-                                        }
-                                    }
-                                    Ops::And(_, _) | Ops::Or(_, _) => {}
-                                }
-                            }
-                            if !found {
-                                println!("{:?}", output);
-                                bads.insert(output.0);
-                            }
+                    if !found {
+                        bads.insert(op.0);
+                    }
+                } else if matches!(op.1, Ops::And(_, _)) {
+                    // need to find or
+                    let mut found = false;
+                    for inner in ops {
+                        if matches!(inner, Ops::Or(_, _)) {
+                            found = true
                         }
                     }
-                }
-                Ops::And(left, right) => {
-                    if !(left.contains("x00") && right.contains("y00")) {
-                        let mut found = false;
-                        for gate in &outputs {
-                            match gate.1 {
-                                Ops::Or(left, right) => {
-                                    if left == output.0 || right == output.0 {
-                                        found = true;
-                                    }
-                                }
-                                Ops::And(_, _) | Ops::Xor(_, _) => {}
-                            }
-                        }
-                        if !found {
-                            // println!("{:?}", output);
-                            bads.insert(output.0);
-                        }
+                    if !found {
+                        bads.insert(op.0);
                     }
                 }
-                Ops::Or(left, right) => {}
             }
         }
-
-        bads.iter().sorted().join(",").to_string()
-
-        // let mut fagate0_followers = vec![];
-        // let fagate3s: Vec<(&String, &Ops)> = outputs
-        //     .iter()
-        //     .filter(|(_, gate)| matches!(gate, Ops::Xor(_, _)))
-        //     .filter(|(_, gate)| {
-        //         !(match gate {
-        //             Ops::Xor(left, right) | Ops::And(left, right) | Ops::Or(left, right) => {
-        //                 left.contains("x") || right.contains("x")
-        //             }
-        //         })
-        //     })
-        //     .map(|(out, gate)| {
-        //         if !out.contains("z") {
-        //             bads.insert(out);
-        //         }
-        //
-        //         (out, gate)
-        //     })
-        //     .collect();
-        // let fagate0s: Vec<(&String, &Ops)> = outputs
-        //     .iter()
-        //     .filter(|(_, gate)| match gate {
-        //         Ops::Xor(left, right) | Ops::And(left, right) | Ops::Or(left, right) => {
-        //             left.contains("x") || right.contains("x")
-        //         }
-        //     })
-        //     .filter(|(_, gate)| matches!(gate, Ops::Xor(_, _)))
-        //     .map(|(out, gate)| {
-        //         let (left, right) = match gate {
-        //             Ops::Xor(left, right) | Ops::And(left, right) | Ops::Or(left, right) => {
-        //                 (left, right)
-        //             }
-        //         };
-        //         if left == "x00" || right == "x00" {
-        //             if out != "z00" {
-        //                 bads.insert(out);
-        //             }
-        //         } else if out == "z00" {
-        //             bads.insert(out);
-        //         }
-        //         if out.contains("z") {
-        //             bads.insert(out);
-        //         }
-        //         if !bads.contains(out) && out != "z00" {
-        //             let has_this: Vec<(&String, &Ops)> = fagate3s
-        //                 .clone()
-        //                 .into_iter()
-        //                 .filter(|(_, gate)| match gate {
-        //                     Ops::Xor(left, right)
-        //                     | Ops::And(left, right)
-        //                     | Ops::Or(left, right) => left == out || right == out,
-        //                 })
-        //                 .collect();
-        //             if has_this.len() == 0 {
-        //                 fagate0_followers.push(out);
-        //                 bads.insert(out);
-        //             }
-        //         }
-        //         (out, gate)
-        //     })
-        //     .collect();
-        //
-        // let outs: Vec<(&String, &Ops)> = outputs
-        //     .iter()
-        //     .filter(|(out, _)| out.contains("z"))
-        //     .map(|(out, gate)| {
-        //         if out == "z45" {
-        //             if !matches!(gate, Ops::Or(_, _)) {
-        //                 bads.insert(out);
-        //             }
-        //         } else if !matches!(gate, Ops::Xor(_, _)) {
-        //             bads.insert(out);
-        //         }
-        //         (out, gate)
-        //     })
-        //     .collect();
+        bads.iter().sorted().join(",")
     }
-}
-
-fn check(wires: &HashMap<String, u8>) -> bool {
-    let mut x = 0;
-    let x_wires: Vec<(&String, &u8)> = wires
-        .iter()
-        .filter(|(wire, val)| wire.starts_with("x"))
-        .sorted_by_key(|x| x.0)
-        .collect();
-    let mut y = 0;
-    let y_wires: Vec<(&String, &u8)> = wires
-        .iter()
-        .filter(|(wire, val)| wire.starts_with("x"))
-        .sorted_by_key(|x| x.0)
-        .collect();
-
-    let mut count = 0;
-    for wire in x_wires {
-        x |= (*wire.1 as u64) << count as u64;
-        count += 1;
-    }
-
-    let mut count = 0;
-    for wire in y_wires {
-        y |= (*wire.1 as u64) << count as u64;
-        count += 1;
-    }
-    let z_wires: Vec<(&String, &u8)> = wires
-        .iter()
-        .filter(|(wire, val)| wire.starts_with("z"))
-        .sorted_by_key(|x| x.0)
-        .collect();
-    let mut z: u64 = 0;
-    let mut count = 0;
-    for wire in z_wires {
-        z |= (*wire.1 as u64) << count as u64;
-        count += 1;
-    }
-    println!("x:{x:048b}\ny:{y:048b}\ne:{:048b}", x + y);
-    println!("a:{z:048b}");
-    println!("d:{:048b}", (x + y) ^ z);
-
-    x + y == z
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -301,4 +166,12 @@ enum Ops {
     Xor(String, String),
     And(String, String),
     Or(String, String),
+}
+
+impl Ops {
+    fn inner(&self) -> (&String, &String) {
+        match self {
+            Ops::Xor(left, right) | Ops::And(left, right) | Ops::Or(left, right) => (left, right),
+        }
+    }
 }

@@ -1,5 +1,5 @@
 use super::Day;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 pub struct Day23 {
     input: String,
